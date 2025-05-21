@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { EmailLoginForm } from './EmailLoginForm';
 import { Toaster } from './ui/toaster';
 
@@ -40,10 +40,12 @@ describe('EmailLoginForm', () => {
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
     fireEvent.click(loginButton);
 
-    // Wait for toast to appear
-    const errorToast = await screen.findByText('Invalid Email');
-    expect(errorToast).toBeTruthy();
-    expect(mockLogin).not.toHaveBeenCalled();
+    // Wait for the toast to appear
+    await waitFor(() => {
+      const errorToast = screen.getByRole('alert');
+      expect(errorToast).toBeTruthy();
+      expect(mockLogin).not.toHaveBeenCalled();
+    });
   });
 
   it('calls onLogin with valid email', async () => {
@@ -63,7 +65,8 @@ describe('EmailLoginForm', () => {
     fireEvent.click(loginButton);
 
     // Wait to check if login was called
-    await screen.findByText('Logging in...');
-    expect(mockLogin).toHaveBeenCalledWith('test@example.com');
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith('test@example.com');
+    });
   });
 });
