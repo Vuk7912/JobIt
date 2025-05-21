@@ -1,11 +1,20 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { EmailLoginForm } from './EmailLoginForm';
 import { Toaster } from './ui/toaster';
+
+// Mock the toast hook
+const mockToast = vi.fn();
+vi.mock('./ui/use-toast', () => ({
+  useToast: () => ({
+    toast: mockToast,
+  }),
+}));
 
 describe('EmailLoginForm', () => {
   afterEach(() => {
     cleanup();
+    mockToast.mockClear();
   });
 
   it('renders email input and login button', () => {
@@ -24,7 +33,7 @@ describe('EmailLoginForm', () => {
     expect(loginButton).toBeTruthy();
   });
 
-  it('validates email on form submission', async () => {
+  it('validates email on form submission', () => {
     const mockLogin = vi.fn();
     render(
       <>
@@ -40,16 +49,17 @@ describe('EmailLoginForm', () => {
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
     fireEvent.click(loginButton);
 
-    // Wait for the toast to appear
-    await waitFor(() => {
-      const errorToast = screen.getByRole('alert');
-      expect(errorToast).toBeTruthy();
-      expect(mockLogin).not.toHaveBeenCalled();
+    // Check toast was called with error
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Invalid Email',
+      description: 'Please enter a valid email address.',
+      variant: 'destructive',
     });
+    expect(mockLogin).not.toHaveBeenCalled();
   });
 
   it('calls onLogin with valid email', async () => {
-    const mockLogin = vi.fn();
+    const mockLogin = vi.fn(async () => {});
     render(
       <>
         <EmailLoginForm onLogin={mockLogin} />
@@ -64,9 +74,7 @@ describe('EmailLoginForm', () => {
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.click(loginButton);
 
-    // Wait to check if login was called
-    await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith('test@example.com');
-    });
+    expect(mockLogin).toHaveBeenCalledWith('test@example.com');
+    expect(mockToast).not.toHaveBeenCalled();
   });
 });
