@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { EmailLoginForm } from './EmailLoginForm';
 
 // Create a mock toast function
@@ -13,8 +14,9 @@ vi.mock('./ui/use-toast', () => ({
 }));
 
 describe('EmailLoginForm', () => {
+  const user = userEvent.setup();
+
   afterEach(() => {
-    cleanup();
     mockToast.mockClear();
   });
 
@@ -29,7 +31,7 @@ describe('EmailLoginForm', () => {
     expect(loginButton).toBeTruthy();
   });
 
-  it('validates email on form submission', () => {
+  it('validates email on form submission', async () => {
     const mockLogin = vi.fn();
     render(<EmailLoginForm onLogin={mockLogin} />);
 
@@ -37,8 +39,10 @@ describe('EmailLoginForm', () => {
     const loginButton = screen.getByRole('button', { name: /login/i });
 
     // Invalid email
-    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    fireEvent.click(loginButton);
+    await act(async () => {
+      await user.type(emailInput, 'invalid-email');
+      await user.click(loginButton);
+    });
 
     // Check toast was called with error
     expect(mockToast).toHaveBeenCalledWith({
@@ -57,8 +61,10 @@ describe('EmailLoginForm', () => {
     const loginButton = screen.getByRole('button', { name: /login/i });
 
     // Valid email
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.click(loginButton);
+    await act(async () => {
+      await user.type(emailInput, 'test@example.com');
+      await user.click(loginButton);
+    });
 
     expect(mockLogin).toHaveBeenCalledWith('test@example.com');
     expect(mockToast).not.toHaveBeenCalled();
