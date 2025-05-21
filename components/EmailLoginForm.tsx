@@ -45,7 +45,7 @@ export const EmailLoginForm: React.FC<EmailLoginFormProps> = ({ onLogin }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" data-testid="email-login-form">
       <div>
         <Label htmlFor="email">Email</Label>
         <Input
