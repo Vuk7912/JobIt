@@ -2,21 +2,20 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { EmailLoginForm } from './EmailLoginForm';
 
-// Mock the toaster and toast hook
-vi.mock('./ui/toaster', () => ({
-  Toaster: () => null,
-  ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+// Create a mock toast function
+const mockToast = vi.fn();
 
+// Mock the use-toast hook
 vi.mock('./ui/use-toast', () => ({
   useToast: () => ({
-    toast: vi.fn(),
+    toast: mockToast,
   }),
 }));
 
 describe('EmailLoginForm', () => {
   afterEach(() => {
     cleanup();
+    mockToast.mockClear();
   });
 
   it('renders email input and login button', () => {
@@ -32,8 +31,6 @@ describe('EmailLoginForm', () => {
 
   it('validates email on form submission', () => {
     const mockLogin = vi.fn();
-    const { toast } = require('./ui/use-toast').useToast();
-
     render(<EmailLoginForm onLogin={mockLogin} />);
 
     const emailInput = screen.getByLabelText('Email');
@@ -44,7 +41,7 @@ describe('EmailLoginForm', () => {
     fireEvent.click(loginButton);
 
     // Check toast was called with error
-    expect(toast).toHaveBeenCalledWith({
+    expect(mockToast).toHaveBeenCalledWith({
       title: 'Invalid Email',
       description: 'Please enter a valid email address.',
       variant: 'destructive',
@@ -54,8 +51,6 @@ describe('EmailLoginForm', () => {
 
   it('calls onLogin with valid email', async () => {
     const mockLogin = vi.fn(async () => {});
-    const { toast } = require('./ui/use-toast').useToast();
-
     render(<EmailLoginForm onLogin={mockLogin} />);
 
     const emailInput = screen.getByLabelText('Email');
@@ -66,6 +61,6 @@ describe('EmailLoginForm', () => {
     fireEvent.click(loginButton);
 
     expect(mockLogin).toHaveBeenCalledWith('test@example.com');
-    expect(toast).not.toHaveBeenCalled();
+    expect(mockToast).not.toHaveBeenCalled();
   });
 });
